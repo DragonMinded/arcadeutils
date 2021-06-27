@@ -287,7 +287,7 @@ class ByteUtil:
     @staticmethod
     def combine16bithalves(upper: bytes, lower: bytes) -> bytes:
         chunks = [
-            b''.join([upper[i:(i+2)], lower[i:(i+2)]])
+            b''.join([upper[i:(i + 2)], lower[i:(i + 2)]])
             for i in range(0, len(upper), 2)
         ]
         return b''.join(chunks)
