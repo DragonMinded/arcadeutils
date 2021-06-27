@@ -7,6 +7,7 @@ setup(
     description='Collection of utilities written in Python for working with various arcade binaries.',
     author='DragonMinded',
     license='Public Domain',
+    package_data={"arcadeutils": ["py.typed"]},
     packages=[
         'arcadeutils',
     ],
