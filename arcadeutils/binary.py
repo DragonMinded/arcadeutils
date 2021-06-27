@@ -29,9 +29,9 @@ class BinaryDiff:
 
         # Chunk the differences, assuming files are usually about the same,
         # for a massive speed boost.
-        for offset in range(0, binlength, Binary.CHUNK_SIZE):
-            if bin1[offset:(offset + Binary.CHUNK_SIZE)] != bin2[offset:(offset + Binary.CHUNK_SIZE)]:
-                for i in range(Binary.CHUNK_SIZE):
+        for offset in range(0, binlength, BinaryDiff.CHUNK_SIZE):
+            if bin1[offset:(offset + BinaryDiff.CHUNK_SIZE)] != bin2[offset:(offset + BinaryDiff.CHUNK_SIZE)]:
+                for i in range(BinaryDiff.CHUNK_SIZE):
                     byte1 = bin1[offset + i]
                     byte2 = bin2[offset + i]
 
@@ -50,13 +50,13 @@ class BinaryDiff:
         ret.append(f"# File size: {len(bin1)}")
 
         def _hexrun(val: bytes) -> str:
-            return " ".join(Binary._hex(v) for v in val)
+            return " ".join(BinaryDiff._hex(v) for v in val)
 
         def _output(val: Tuple[int, bytes, bytes]) -> None:
             start = val[0] - len(val[1]) + 1
 
             ret.append(
-                f"{Binary._hex(start)}: {_hexrun(val[1])} -> {_hexrun(val[2])}"
+                f"{BinaryDiff._hex(start)}: {_hexrun(val[1])} -> {_hexrun(val[2])}"
             )
 
         def _combine(val: Tuple[int, bytes, bytes]) -> None:
@@ -113,10 +113,10 @@ class BinaryDiff:
             start_offset, patch_contents = patch.split(':', 1)
             before, after = patch_contents.split('->')
             beforevals = [
-                Binary._convert(x) for x in before.split(" ") if x.strip()
+                BinaryDiff._convert(x) for x in before.split(" ") if x.strip()
             ]
             aftervals = [
-                Binary._convert(x) for x in after.split(" ") if x.strip()
+                BinaryDiff._convert(x) for x in after.split(" ") if x.strip()
             ]
 
             if len(beforevals) != len(aftervals):
@@ -168,14 +168,14 @@ class BinaryDiff:
         reverse: bool = False,
     ) -> bytes:
         # First, grab the differences
-        file_size = Binary.size(patchlines)
+        file_size = BinaryDiff.size(patchlines)
         if file_size is not None and file_size != len(binary):
             raise BinaryDiffException(
                 f"Patch is for binary of size {file_size} but binary is {len(binary)} "
                 f"bytes long!"
             )
         differences: List[Tuple[int, Optional[bytes], bytes]] = sorted(
-            Binary._gather_differences(patchlines, reverse),
+            BinaryDiff._gather_differences(patchlines, reverse),
             key=lambda diff: diff[0],
         )
         chunks: List[bytes] = []
@@ -187,13 +187,13 @@ class BinaryDiff:
 
             if len(binary) < offset:
                 raise BinaryDiffException(
-                    f"Patch offset {Binary._hex(offset)} is beyond the end of "
+                    f"Patch offset {BinaryDiff._hex(offset)} is beyond the end of "
                     f"the binary!"
                 )
             if old is not None and binary[offset:(offset + 1)] != old:
                 raise BinaryDiffException(
-                    f"Patch offset {Binary._hex(offset)} expecting {Binary._hex(old[0])} "
-                    f"but found {Binary._hex(binary[offset])}!"
+                    f"Patch offset {BinaryDiff._hex(offset)} expecting {BinaryDiff._hex(old[0])} "
+                    f"but found {BinaryDiff._hex(binary[offset])}!"
                 )
 
             if last_patch_end < offset:
@@ -215,14 +215,14 @@ class BinaryDiff:
     ) -> Tuple[bool, str]:
         # First, grab the differences
         if not ignore_size_differences:
-            file_size = Binary.size(patchlines)
+            file_size = BinaryDiff.size(patchlines)
             if file_size is not None and file_size != len(binary):
                 return (
                     False,
                     f"Patch is for binary of size {file_size} but binary is {len(binary)} "
                     f"bytes long!"
                 )
-        differences: List[Tuple[int, Optional[bytes], bytes]] = Binary._gather_differences(patchlines, reverse)
+        differences: List[Tuple[int, Optional[bytes], bytes]] = BinaryDiff._gather_differences(patchlines, reverse)
 
         # Now, verify the changes to the binary data
         for diff in differences:
@@ -231,14 +231,14 @@ class BinaryDiff:
             if len(binary) < offset:
                 return (
                     False,
-                    f"Patch offset {Binary._hex(offset)} is beyond the end of "
+                    f"Patch offset {BinaryDiff._hex(offset)} is beyond the end of "
                     f"the binary!"
                 )
             if old is not None and binary[offset:(offset + 1)] != old:
                 return (
                     False,
-                    f"Patch offset {Binary._hex(offset)} expecting {Binary._hex(old[0])} "
-                    f"but found {Binary._hex(binary[offset])}!"
+                    f"Patch offset {BinaryDiff._hex(offset)} expecting {BinaryDiff._hex(old[0])} "
+                    f"but found {BinaryDiff._hex(binary[offset])}!"
                 )
 
         # Didn't find any problems
@@ -257,7 +257,7 @@ class BinaryDiff:
     @staticmethod
     def needed_amount(patchlines: List[str]) -> int:
         # First, grab the differences.
-        differences: List[Tuple[int, Optional[bytes], bytes]] = Binary._gather_differences(patchlines, False)
+        differences: List[Tuple[int, Optional[bytes], bytes]] = BinaryDiff._gather_differences(patchlines, False)
 
         # Now, get the maximum byte we need to apply this patch.
         return max([offset for offset, _, _ in differences]) + 1 if differences else 0
