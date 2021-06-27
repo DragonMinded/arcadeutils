@@ -1,0 +1,130 @@
+#! /usr/bin/env python3
+import argparse
+import os
+import sys
+
+from arcadeutils.binary import ByteUtil
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser("ROM manipulation utilities.")
+    subparsers = parser.add_subparsers(
+        dest="action",
+        help="Action to perform.",
+    )
+
+    byteswap = subparsers.add_parser(
+        "byteswap",
+        help="Swap every byte pair of a 16bit rom.",
+    )
+    byteswap.add_argument(
+        "old",
+        metavar="OLD",
+        type=str,
+        help="Old rom file to byteswap.",
+    )
+    byteswap.add_argument(
+        "new",
+        metavar="NEW",
+        type=str,
+        help="New rom file to write after byteswapping.",
+    )
+
+    wordswap = subparsers.add_parser(
+        "wordswap",
+        help="Swap every 32bit value in a 32bit rom.",
+    )
+    wordswap.add_argument(
+        "old",
+        metavar="OLD",
+        type=str,
+        help="Old rom file to wordswap.",
+    )
+    wordswap.add_argument(
+        "new",
+        metavar="NEW",
+        type=str,
+        help="New rom file to write after wordswapping.",
+    )
+
+    combine8 = subparsers.add_parser(
+        "combine8",
+        help="Combine two 8bit roms to one 16bit rom.",
+    )
+    combine8.add_argument(
+        "upper",
+        metavar="UPPER",
+        type=str,
+        help="Upper half of rom file.",
+    )
+    combine8.add_argument(
+        "lower",
+        metavar="LOWER",
+        type=str,
+        help="Lower half of rom file.",
+    )
+    combine8.add_argument(
+        "combined",
+        metavar="COMBINED",
+        type=str,
+        help="Combined output file.",
+    )
+
+    combine16 = subparsers.add_parser(
+        "combine16",
+        help="Combine two 16bit roms to one 32bit rom.",
+    )
+    combine16.add_argument(
+        "upper",
+        metavar="UPPER",
+        type=str,
+        help="Upper half of rom file.",
+    )
+    combine16.add_argument(
+        "lower",
+        metavar="LOWER",
+        type=str,
+        help="Lower half of rom file.",
+    )
+    combine16.add_argument(
+        "combined",
+        metavar="COMBINED",
+        type=str,
+        help="Combined output file.",
+    )
+
+    args = parser.parse_args()
+    if args.action == "combine8":
+        with open(args.upper, "rb") as fp:
+            upper = fp.read()
+        with open(args.lower, "rb") as fp:
+            lower = fp.read()
+        with open(args.combined, "wb") as fp:
+            fp.write(ByteUtil.combine8bithalves(upper, lower))
+    elif args.action == "combine16":
+        with open(args.upper, "rb") as fp:
+            upper = fp.read()
+        with open(args.lower, "rb") as fp:
+            lower = fp.read()
+        with open(args.combined, "wb") as fp:
+            fp.write(ByteUtil.combine16bithalves(upper, lower))
+    elif args.action == "byteswap":
+        with open(args.old, "rb") as fp:
+            old = fp.read()
+        with open(args.new, "wb") as fp:
+            fp.write(ByteUtil.byteswap(old))
+    elif args.action == "wordswap":
+        with open(args.old, "rb") as fp:
+            old = fp.read()
+        with open(args.new, "wb") as fp:
+            fp.write(ByteUtil.wordswap(old))
+    else:
+        print(f"Please specify a valid command!{os.linesep}", file=sys.stderr)
+        parser.print_help()
+        return 1
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -52,3 +52,9 @@ A patch with multiple offsets, and helpful author descriptions for each section:
 # This part of the patch fixes sound playback issues.
 256: 33 -> 44
 ```
+
+## splitrom
+
+Utility for combining/splitting/byteswapping ROM files. Run it like `./splitrom --help`
+to see generic help and what commands are available, and like `./splitrom <command> --help`
+for a specific command's help.
