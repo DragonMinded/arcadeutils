@@ -58,3 +58,17 @@ A patch with multiple offsets, and helpful author descriptions for each section:
 Utility for combining/splitting/byteswapping ROM files. Run it like `./splitrom --help`
 to see generic help and what commands are available, and like `./splitrom <command> --help`
 for a specific command's help.
+
+## Developing
+
+The tools here are fully typed, and should be kept that way. To verify type hints, run the following:
+
+```
+mypy --strict .
+```
+
+The tools are also lint clean (save for line length lints which are useless drivel). To verify lint, run the following:
+
+```
+flake8 --ignore E501 .
+```
