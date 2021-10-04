@@ -18,7 +18,9 @@ make the patch non-reversible. Arbitrary comments are supported anywhere in the 
 Start a line with the `#` character to create a comment. Special values are recognized
 in comments. If you create a comment starting with `# File size:` then the the base
 file will be compared against the decimal number placed after the colon and any file
-not matching that length will be rejected.
+not matching that length will be rejected. If you create a comment starting with
+`# Description` then all text after the colon will be seen as a description for the
+whole patch. Various code uses this description as a patch title.
 
 Some examples are as follows:
 
