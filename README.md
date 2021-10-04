@@ -77,8 +77,8 @@ flake8 --ignore E501 .
 
 By design, this code can be used as a library by other python code, and as it is Public Domain,
 it can be included wherever. I would prefer that you attribute me when possible, but it is not
-necessary. There is currently no PyPI package for arcadeutils, but if you clone the repo and
-run `pip install .` on the root, the package will be installed for you. Alternatively if you
+necessary. This package can be found on PyPI under "arcadeutils", or you can clone the repo and
+run `pip install .` on the root and the package will be installed for you. Alternatively if you
 place the line `git+https://github.com/DragonMinded/arcadeutils.git@main#egg=arcadeutils` in your
 requirements file, then when you run `pip install -r requirements.txt` on your own code, the latest
 version of this package will be installed for you.
