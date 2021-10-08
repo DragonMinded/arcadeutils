@@ -91,6 +91,8 @@ instead patch the reverse of each patch. A binary that was patched using `Binary
 can be reverted back to the original format by calling `BinaryDiff.patch` again with
 the "reverse" argument set to True. Note that the only restriction to this is if any of
 the patches include wildcards then the resulting patched binary cannot be reversed.
+If you pass in the optional boolean keyword argument "ignore_size_differences" then the
+"File Size" comment will be ignored.
 
 ### Patch Format
 

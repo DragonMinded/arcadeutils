@@ -166,14 +166,17 @@ class BinaryDiff:
         patchlines: List[str],
         *,
         reverse: bool = False,
+        ignore_size_differences: bool = False,
     ) -> bytes:
         # First, grab the differences
-        file_size = BinaryDiff.size(patchlines)
-        if file_size is not None and file_size != len(binary):
-            raise BinaryDiffException(
-                f"Patch is for binary of size {file_size} but binary is {len(binary)} "
-                f"bytes long!"
-            )
+        if not ignore_size_differences:
+            file_size = BinaryDiff.size(patchlines)
+            if file_size is not None and file_size != len(binary):
+                raise BinaryDiffException(
+                    f"Patch is for binary of size {file_size} but binary is {len(binary)} "
+                    f"bytes long!"
+                )
+
         differences: List[Tuple[int, Optional[bytes], bytes]] = sorted(
             BinaryDiff._gather_differences(patchlines, reverse),
             key=lambda diff: diff[0],
