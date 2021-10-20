@@ -1,5 +1,7 @@
-from typing import List, Optional, Tuple, cast
+from typing import List, Optional, Tuple, Union, cast, overload
 from typing_extensions import Final
+
+from .filebytes import FileBytes
 
 
 class BinaryDiffException(Exception):
@@ -19,7 +21,7 @@ class BinaryDiff:
         return out
 
     @staticmethod
-    def diff(bin1: bytes, bin2: bytes) -> List[str]:
+    def diff(bin1: Union[bytes, FileBytes], bin2: Union[bytes, FileBytes]) -> List[str]:
         binlength = len(bin1)
         if binlength != len(bin2):
             raise BinaryDiffException("Cannot diff different-sized binary blobs!")
@@ -164,6 +166,7 @@ class BinaryDiff:
         # Finally, return it
         return differences
 
+    @overload
     @staticmethod
     def patch(
         binary: bytes,
@@ -172,6 +175,31 @@ class BinaryDiff:
         reverse: bool = False,
         ignore_size_differences: bool = False,
     ) -> bytes:
+        ...
+
+    @overload
+    @staticmethod
+    def patch(
+        binary: FileBytes,
+        patchlines: List[str],
+        *,
+        reverse: bool = False,
+        ignore_size_differences: bool = False,
+    ) -> FileBytes:
+        ...
+
+    @staticmethod
+    def patch(
+        binary: Union[bytes, FileBytes],
+        patchlines: List[str],
+        *,
+        reverse: bool = False,
+        ignore_size_differences: bool = False,
+    ) -> Union[bytes, FileBytes]:
+        # If we were given filebytes, get a clone of it so we don't modify the input.
+        if isinstance(binary, FileBytes):
+            binary = binary.clone()
+
         # First, grab the differences
         if not ignore_size_differences:
             file_size = BinaryDiff.size(patchlines)
@@ -203,18 +231,31 @@ class BinaryDiff:
                     f"but found {BinaryDiff._hex(binary[offset])}!"
                 )
 
-            if last_patch_end < offset:
-                chunks.append(binary[last_patch_end:offset])
-            chunks.append(new)
-            last_patch_end = offset + 1
+            if isinstance(binary, bytes):
+                if last_patch_end < offset:
+                    chunks.append(binary[last_patch_end:offset])
+                chunks.append(new)
+                last_patch_end = offset + 1
+            elif isinstance(binary, FileBytes):
+                binary[offset:(offset + len(new))] = new
+            else:
+                # This should never happen?
+                raise NotImplementedError("Not implemented!")
 
-        # Return the new data!
-        chunks.append(binary[last_patch_end:])
-        return b"".join(chunks)
+        if isinstance(binary, bytes):
+            # Return the new data!
+            chunks.append(binary[last_patch_end:])
+            return b"".join(chunks)
+        elif isinstance(binary, FileBytes):
+            # We modified the filebytes object in place.
+            return binary
+        else:
+            # This should never happen?
+            raise NotImplementedError("Not implemented!")
 
     @staticmethod
     def can_patch(
-        binary: bytes,
+        binary: Union[bytes, FileBytes],
         patchlines: List[str],
         *,
         reverse: bool = False,

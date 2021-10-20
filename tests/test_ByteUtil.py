@@ -1,5 +1,6 @@
-from arcadeutils import ByteUtil
 import unittest
+
+from arcadeutils import ByteUtil
 
 
 class TestBinaryDiff(unittest.TestCase):
