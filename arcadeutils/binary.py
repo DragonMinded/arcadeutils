@@ -304,6 +304,21 @@ class ByteUtil:
         return b''.join(chunks)
 
     @staticmethod
+    def split16bithalves(data: bytes) -> Tuple[bytes, bytes]:
+        length = len(data)
+        return(
+            b''.join(data[x:(x + 2)] for x in range(0, length, 4)),
+            b''.join(data[(x + 2):(x + 4)] for x in range(0, length, 4)),
+        )
+
+    @staticmethod
     def combine8bithalves(upper: bytes, lower: bytes) -> bytes:
         chunks = [bytes([upper[i], lower[i]]) for i in range(len(upper))]
         return b''.join(chunks)
+
+    @staticmethod
+    def split8bithalves(data: bytes) -> Tuple[bytes, bytes]:
+        return (
+            bytes([d for d in data[::2]]),
+            bytes([d for d in data[1::2]]),
+        )
