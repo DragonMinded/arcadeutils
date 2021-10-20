@@ -75,6 +75,12 @@ The tools are also lint clean (save for line length lints which are useless driv
 flake8 --ignore E501 .
 ```
 
+The tools also have their own unit tests. To verify tests, run the following:
+
+```
+python3 -m unittest discover tests
+```
+
 ## Including This Package
 
 By design, this code can be used as a library by other python code, and as it is Public Domain,

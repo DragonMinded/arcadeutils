@@ -30,8 +30,9 @@ class BinaryDiff:
         # Chunk the differences, assuming files are usually about the same,
         # for a massive speed boost.
         for offset in range(0, binlength, BinaryDiff.CHUNK_SIZE):
-            if bin1[offset:(offset + BinaryDiff.CHUNK_SIZE)] != bin2[offset:(offset + BinaryDiff.CHUNK_SIZE)]:
-                for i in range(BinaryDiff.CHUNK_SIZE):
+            length = min(BinaryDiff.CHUNK_SIZE, binlength - offset)
+            if bin1[offset:(offset + length)] != bin2[offset:(offset + length)]:
+                for i in range(length):
                     byte1 = bin1[offset + i]
                     byte2 = bin2[offset + i]
 
@@ -91,7 +92,10 @@ class BinaryDiff:
                 # This is a comment, ignore it, unless its a file-size comment
                 patch = patch[1:].strip().lower()
                 if patch.startswith('file size:'):
-                    return int(patch[10:].strip())
+                    try:
+                        return int(patch[10:].strip())
+                    except ValueError:
+                        return None
         return None
 
     @staticmethod
@@ -225,7 +229,11 @@ class BinaryDiff:
                     f"Patch is for binary of size {file_size} but binary is {len(binary)} "
                     f"bytes long!"
                 )
-        differences: List[Tuple[int, Optional[bytes], bytes]] = BinaryDiff._gather_differences(patchlines, reverse)
+
+        try:
+            differences: List[Tuple[int, Optional[bytes], bytes]] = BinaryDiff._gather_differences(patchlines, reverse)
+        except BinaryDiffException as e:
+            return (False, str(e))
 
         # Now, verify the changes to the binary data
         for diff in differences:
