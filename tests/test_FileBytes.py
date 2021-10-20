@@ -1,4 +1,5 @@
 import io
+import random
 import unittest
 
 from arcadeutils import FileBytes
@@ -712,3 +713,73 @@ class TestFileBytes(unittest.TestCase):
             clone[:],
             b"0123456",
         )
+
+    def test_search_basic(self) -> None:
+        fb = FileBytes(io.BytesIO((b"\0" * 54321) + (b"0123456789") + (b"\0" * 54321)))
+        self.assertEqual(
+            fb.search(b"0123456789"),
+            54321,
+        )
+        self.assertEqual(
+            fb.search(b"4567"),
+            54325,
+        )
+        self.assertEqual(
+            fb.search(b"abcde"),
+            None,
+        )
+
+    def test_search_bounds(self) -> None:
+        fb = FileBytes(io.BytesIO((b"\0" * 5) + (b"0123456789") + (b"\0" * 5)))
+        self.assertEqual(
+            fb.search(b"0123456789", start=5),
+            5,
+        )
+        self.assertEqual(
+            fb.search(b"0123456789", start=6),
+            None,
+        )
+        self.assertEqual(
+            fb.search(b"0123456789", end=15),
+            5,
+        )
+        self.assertEqual(
+            fb.search(b"0123456789", end=14),
+            None,
+        )
+        self.assertEqual(
+            fb.search(b"0123456789", start=3, end=18),
+            5,
+        )
+        self.assertEqual(
+            fb.search(b"0123456789", start=5, end=15),
+            5,
+        )
+
+    def test_search_edges(self) -> None:
+        fb = FileBytes(io.BytesIO((b"\0" * 5) + (b"0123456789")))
+        self.assertEqual(
+            fb.search(b"0123456789"),
+            5,
+        )
+
+        fb = FileBytes(io.BytesIO(b"0123456789"))
+        self.assertEqual(
+            fb.search(b"0123456789"),
+            0,
+        )
+
+        fb = FileBytes(io.BytesIO(b"0123456789" + (b"\0" * 5)))
+        self.assertEqual(
+            fb.search(b"0123456789"),
+            0,
+        )
+
+    def test_search_random(self) -> None:
+        for _ in range(25):
+            location = random.randint(1, 2000)
+            fb = FileBytes(io.BytesIO((b"\0" * location) + (b"12345") + (b"\0" * random.randint(1, 2000))))
+            self.assertEqual(
+                fb.search(b"12345"),
+                location,
+            )

@@ -1,4 +1,4 @@
-from typing import BinaryIO, Dict, List, Set, Tuple, Union, overload
+from typing import BinaryIO, Dict, List, Optional, Set, Tuple, Union, overload
 
 
 class FileBytes:
@@ -16,6 +16,84 @@ class FileBytes:
     @property
     def handle(self) -> BinaryIO:
         return self.__handle
+
+    def search(self, search: Union[bytes, "FileBytes"], *, start: Optional[int] = None, end: Optional[int] = None) -> Optional[int]:
+        # Search the file for search bytes in a faster manner than reloading the
+        # file byte for byte for every position to search.
+
+        searchlen = len(search)
+        if searchlen > self.__patchlength:
+            # There's no way that the search bytes could be in this file.
+            return None
+        if isinstance(search, FileBytes):
+            search = search[:]
+
+        if start is None:
+            searchstart = 0
+        else:
+            searchstart = start
+        if searchstart < 0 or searchstart > (self.__patchlength - (searchlen - 1)):
+            # Never going to find it anyway.
+            return None
+
+        if end is None:
+            searchend = self.__patchlength
+        else:
+            searchend = end
+        searchend -= (searchlen - 1)
+        if searchend <= searchstart:
+            # Never going to find it anyway.
+            return None
+
+        chunksize = max(searchlen * 2, 1024)
+        startoffset = searchstart
+        data: bytes = self[searchstart:(searchstart + (chunksize * 3))]
+        endoffset = searchstart + len(data)
+
+        def addchunk() -> bool:
+            nonlocal chunksize
+            nonlocal startoffset
+            nonlocal endoffset
+            nonlocal data
+
+            # Load the next chunk of data, including changes.
+            newdata = self[endoffset:(endoffset + chunksize)]
+            if not newdata:
+                return False
+
+            # Stick the data on the end of the cache.
+            data = data + newdata
+
+            # Update the end offset pointer so we know were to load from next time.
+            endoffset += len(newdata)
+
+            # If we got too long, then truncate ourselves so we don't blow up
+            # our memory searching the file.
+            if len(data) >= (3 * chunksize):
+                data = data[chunksize:]
+                startoffset += chunksize
+
+            return True
+
+        for offset in range(searchstart, searchend):
+            start = offset
+            end = offset + searchlen
+
+            if end > endoffset:
+                if not addchunk():
+                    # No more chunks left to search, and we hit the end of the
+                    # current chunk, so we have no more data to find.
+                    return None
+
+            actualstart = start - startoffset
+            actualend = end - startoffset
+
+            # If this chunk looks like a match, then return the start index.
+            if data[actualstart:actualend] == search:
+                return start
+
+        # Could not find the data.
+        return None
 
     def __len__(self) -> int:
         if self.__unsafe:
@@ -229,11 +307,10 @@ class FileBytes:
 
             # Do we have any modifications to the file in this area?
             modifications = any(index in self.__patches for index in range(start, stop, step))
-            outofrange = any(index >= self.__filelength for index in range(start, stop, step))
 
             # Now see if we can do any fast loading
             if start < stop and step == 1:
-                if not modifications and not outofrange:
+                if not modifications:
                     # This is just a contiguous read
                     self.__handle.seek(start)
                     return self.__handle.read(stop - start)
@@ -253,7 +330,7 @@ class FileBytes:
 
                     return bytes(data)
             elif start > stop and step == -1:
-                if not modifications and not outofrange:
+                if not modifications:
                     # This is just a continguous read, reversed
                     self.__handle.seek(stop + 1)
                     return self.__handle.read(start - stop)[::-1]

@@ -90,6 +90,15 @@ Truncates the internal representation of the file to the number of bytes specifi
 This discards any data or changes applied after the truncation. When calling `write_changes()`
 the file will be resized accordingly to truncate it down.
 
+### search() method
+
+Takes a single bytes or FileBytes object and searches the current instance for those
+bytes. Returns the index of the first found occurence of those bytes if they are present
+or None of they are not. Note that much like `append()`, searching from another FileBytes
+will cause the entire file to be read before it is used as the search term. Optionally
+a start keyword argument can be supplied to specify an offset to start searching at.
+Optionally an end keyword argument can be supplied to specify an offset to stop searching at.
+
 ### write_changes() method
 
 Applies all append, truncate and update operations that were performed to the instance
