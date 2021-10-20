@@ -8,7 +8,7 @@ with open(os.path.join("arcadeutils", "README.md"), "r", encoding="utf-8") as fh
 
 setup(
     name='arcadeutils',
-    version='0.1.3',
+    version='0.1.4',
     description='Collection of utilities written in Python for working with various arcade binaries.',
     long_description=long_description,
     long_description_content_type="text/markdown",
