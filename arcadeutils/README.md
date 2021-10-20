@@ -38,6 +38,66 @@ two 8-bit chips that are memory-mapped to a 16-bit word on the hardware they wer
 from. Assembles them both into a single 16-bit ROM file where each half-word is made
 up of the 8-bit upper value and 8-bit lower value of the two inputs.
 
+# ByteUtil.split16bithalves
+
+Takes a single byte argument "data", assumes that it is a 32-bit ROM and splits it into
+two 16-bit ROMs of the upper and lower halves of each 32-bit value, returning a tuple of
+the upper and lower bytes. This is the exact reciprocal of `combine16bithalves`.
+
+# ByteUtil.split8bithalves
+
+Takes a single byte argument "data", assumes that it is a 16-bit ROM and splits it into
+two 8-bit ROMs of the upper and lower halves of each 16-bit value, returning a tuple of
+the upper and lower bytes. This is the exact reciprocal of `combine8bithalves`.
+
+## FileBytes
+
+A class that can be passed an open file handle for a binary file that was opened either
+in read-only or append mode. Presents a bytearray-like interface where data can read
+or written as if it was an array in memory without loading the file into RAM. This can
+be used with any function in `BinaryDiff` that takes an argument of type bytes in order
+to minimize the memory footprint of patching on systems with limited RAM.
+
+In addition to the properties and methods below, you can call len() on an instance of
+FileBytes to get the length, you can index into it using array syntax, and you can add
+an instance of FileBytes or binary data to an existing FileBytes instance in order to
+append data, much like a bytes or bytearray instance.
+
+### handle property
+
+Returns the original handle that this FileBytes instance was constructed with. Note that
+this is read-only by design so that the handle cannot be changed out from under the
+class.
+
+### clone() method
+
+Returns a clone of the current FileBytes instance so that the clone or original can be
+safely modified without affecting the other copy. Note that if you choose to call
+`write_changes()` on any instance of a FileBytes, all clones of that instance will
+be placed into a mode where they can only be cloned themselves to prevent surprises.
+
+### append() method
+
+Appends bytes or the contents of another FileBytes instance to the end of this instance.
+The data will be placed at the very end, resizing the internal representation of the file
+to fit the data. When calling `write_changes()` these bytes will be included and the file
+will be resized accordingly. Note that appending from another FileBytes will cause the
+entire file to be read before it is appended.
+
+### truncate() method
+
+Truncates the internal representation of the file to the number of bytes specified.
+This discards any data or changes applied after the truncation. When calling `write_changes()`
+the file will be resized accordingly to truncate it down.
+
+### write_changes() method
+
+Applies all append, truncate and update operations that were performed to the instance
+of FileBytes. The file will be updated to match the contents of FileBytes and then the
+FileBytes instance will be updated to reflect that new file. Once you call this method,
+any clones of the instance you have written changes back from will invalidate themselves
+so that you are not surprised by their contents changing out from under you.
+
 ## BinaryDiff
 
 The BinaryDiff class provides a series of handy functions for manipulating binary data
@@ -49,7 +109,9 @@ be human-readable.
 
 Given two identically-lengthed bytes arguments "bin1" and "bin2", returns a list of
 patches that would need to be applied to "bin1" to convert it to "bin2". See the below
-patch format for documentation as to what each list entry will look like.
+patch format for documentation as to what each list entry will look like. Note that in
+addition to bytes, either "bin1", "bin2" or both can be provided instead an instance of
+`FileBytes` to diff data that is not loaded into RAM.
 
 ### BinaryDiff.size
 
@@ -80,7 +142,9 @@ bytes to patch or having incorrect bytes at a particular patch offset. If you pa
 the optional boolean keyword argument "reverse" set to True, this function will calculate
 whether the reverse of the patch could instead be applied. If you pass in the optional
 boolean keyword argument "ignore_size_differences" then the "File Size" comment will be
-ignored.
+ignored. Note that in addition to bytes, the "binary" argument can be passed an instance
+of `FileBytes` in order to check a file for patch applicability without loading it into
+RAM.
 
 ### BinaryDiff.patch
 
@@ -92,7 +156,10 @@ can be reverted back to the original format by calling `BinaryDiff.patch` again 
 the "reverse" argument set to True. Note that the only restriction to this is if any of
 the patches include wildcards then the resulting patched binary cannot be reversed.
 If you pass in the optional boolean keyword argument "ignore_size_differences" then the
-"File Size" comment will be ignored.
+"File Size" comment will be ignored. Note that in addition to bytes, the "binary" argument
+can be passed an instance of `FileBytes` in order to patch a file without loading it into
+RAM. If you go this route, make sure to call `FileBytes.write_changes` after calling
+`BinaryDiff.patch`.
 
 ### Patch Format
 

@@ -49,12 +49,12 @@ class FileBytes:
 
         return myclone
 
-    def append(self, data: bytes) -> None:
+    def append(self, data: Union[bytes, "FileBytes"]) -> None:
         if self.__unsafe:
             raise Exception("Another FileBytes instance representing the same file was written back!")
 
         # Add data to the end of our representation.
-        for off, change in enumerate(data):
+        for off, change in enumerate(data[:]):
             self.__patches[self.__patchlength + off] = change
 
         self.__patchlength += len(data)
