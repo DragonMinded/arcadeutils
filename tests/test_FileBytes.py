@@ -358,6 +358,37 @@ class TestFileBytes(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             fb[3:7] = b""
 
+    def test_append_null(self) -> None:
+        fb = FileBytes(io.BytesIO(b"0123456789"))
+
+        # Length check.
+        self.assertEqual(
+            len(fb),
+            10,
+        )
+
+        fb.append(b"")
+        self.assertEqual(
+            len(fb),
+            10,
+        )
+
+        # Verify modification stuck.
+        self.assertEqual(
+            fb[:],
+            b"0123456789",
+        )
+
+        # Verify that it gets serialized correctly.
+        fb.write_changes()
+        handle = fb.handle
+        if not isinstance(handle, io.BytesIO):
+            raise Exception("File handle changed type somehow!")
+        self.assertEqual(
+            handle.getvalue(),
+            b"0123456789",
+        )
+
     def test_append_modify(self) -> None:
         fb = FileBytes(io.BytesIO(b"0123456789"))
 
