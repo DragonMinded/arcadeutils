@@ -9,6 +9,7 @@ class FileBytes:
     def __init__(self, handle: BinaryIO) -> None:
         self.__handle: BinaryIO = handle
         self.__patches: Dict[int, int] = {}
+        self.__regions: Set[int] = set()
         self.__copies: List["FileBytes"] = []
         self.__unsafe: bool = False
         self.__lowest_patch: Optional[int] = None
@@ -125,6 +126,7 @@ class FileBytes:
         myclone.__patches = {k: v for k, v in self.__patches.items()}
         myclone.__lowest_patch = self.__lowest_patch
         myclone.__highest_patch = self.__highest_patch
+        myclone.__regions = self.__regions
         myclone.__filelength = self.__filelength
         myclone.__patchlength = self.__patchlength
         myclone.__origfilelength = self.__origfilelength
@@ -145,6 +147,7 @@ class FileBytes:
             self.__patches[loc] = change
             self.__lowest_patch = min(self.__lowest_patch, loc) if self.__lowest_patch is not None else loc
             self.__highest_patch = max(self.__highest_patch, loc + 1) if self.__highest_patch is not None else (loc + 1)
+            self.__regions.clear()
 
         self.__patchlength += len(data)
 
@@ -164,9 +167,13 @@ class FileBytes:
             self.__filelength = size
 
         # Get rid of any changes made in the truncation range.
+        cleared: bool = False
         for off in range(size, self.__patchlength):
             if off in self.__patches:
                 del self.__patches[off]
+                cleared = True
+        if cleared:
+            self.__regions.clear()
 
         # Set the length of this object to the size as well so resizing will
         # zero out the data.
@@ -237,6 +244,7 @@ class FileBytes:
             # Now that we've serialized out the data, clean up our own representation.
             self.__handle.flush()
             self.__patches.clear()
+            self.__regions.clear()
             self.__lowest_patch = None
             self.__highest_patch = None
             self.__filelength = self.__patchlength
@@ -261,8 +269,9 @@ class FileBytes:
                 inst.__patchlength = self.__patchlength
                 inst.__origfilelength = self.__origfilelength
                 inst.__patches.clear()
-                self.__lowest_patch = None
-                self.__highest_patch = None
+                inst.__regions.clear()
+                inst.__lowest_patch = None
+                inst.__highest_patch = None
 
     def __slice(self, key: slice) -> Tuple[int, int, int]:
         # Determine step of slice
@@ -344,7 +353,41 @@ class FileBytes:
             elif self.__highest_patch is None or (start > self.__highest_patch and stop > self.__highest_patch):
                 modifications = False
             else:
-                modifications = any(index in self.__patches for index in range(start, stop, step))
+                # Whether we should do the slow check or not.
+                check = False
+
+                if not self.__regions:
+                    # Recreate the index.
+                    last_index = -1
+                    for iterval in sorted(self.__patches.keys()):
+                        # Only attempt to update the region cache if we haven't already
+                        # seen something in this section.
+                        index = iterval // self.IO_SIZE
+                        if index != last_index:
+                            self.__regions.add(index)
+                            last_index = index
+
+                if start > stop:
+                    iterstart = stop + 1
+                    iterend = start + 1
+                else:
+                    iterstart = start
+                    iterend = stop
+
+                iterstart //= self.IO_SIZE
+                iterend //= self.IO_SIZE
+
+                if iterend == iterstart:
+                    iterend += 1
+
+                for index in range(iterstart, iterend):
+                    if index in self.__regions:
+                        check = True
+
+                if check:
+                    modifications = any(index in self.__patches for index in range(start, stop, step))
+                else:
+                    modifications = False
 
             # Now see if we can do any fast loading
             if start < stop and step == 1:
@@ -433,6 +476,7 @@ class FileBytes:
             self.__patches[key] = val
             self.__lowest_patch = min(self.__lowest_patch, key) if self.__lowest_patch is not None else key
             self.__highest_patch = max(self.__highest_patch, key + 1) if self.__highest_patch is not None else (key + 1)
+            self.__regions.clear()
 
         elif isinstance(key, slice):
             if not isinstance(val, bytes):
@@ -467,6 +511,7 @@ class FileBytes:
                 self.__patches[off] = val[index]
                 self.__lowest_patch = min(self.__lowest_patch, off) if self.__lowest_patch is not None else off
                 self.__highest_patch = max(self.__highest_patch, off + 1) if self.__highest_patch is not None else (off + 1)
+                self.__regions.clear()
 
         else:
             raise NotImplementedError("Not implemented!")
