@@ -8,7 +8,7 @@ with open(os.path.join("arcadeutils", "README.md"), "r", encoding="utf-8") as fh
 
 setup(
     name='arcadeutils',
-    version='0.1.8',
+    version='0.1.9',
     description='Collection of utilities written in Python for working with various arcade binaries.',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -19,6 +19,9 @@ setup(
     package_data={"arcadeutils": ["py.typed", "README.md"]},
     packages=[
         'arcadeutils',
+    ],
+    install_requires=[
+        'typing-extensions',
     ],
     python_requires=">=3.6",
 )

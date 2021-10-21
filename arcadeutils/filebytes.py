@@ -1,10 +1,11 @@
 import shutil
 from typing import BinaryIO, Dict, List, Optional, Set, Tuple, Union, overload
+from typing_extensions import Final
 
 
 class FileBytes:
 
-    IO_SIZE: int = 0x8000
+    IO_SIZE: Final[int] = 0x8000
 
     def __init__(self, handle: BinaryIO) -> None:
         self.__handle: BinaryIO = handle
