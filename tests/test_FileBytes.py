@@ -814,3 +814,49 @@ class TestFileBytes(unittest.TestCase):
                 fb.search(b"12345"),
                 location,
             )
+
+    def test_write_new_file(self) -> None:
+        fb = FileBytes(io.BytesIO(b"0123456789"))
+
+        fb[3] = 97
+        self.assertEqual(
+            fb[:],
+            b"012a456789",
+        )
+
+        fb[7:9] = b"bc"
+        self.assertEqual(
+            fb[:],
+            b"012a456bc9",
+        )
+
+        fb[4:8:2] = b"de"
+        self.assertEqual(
+            fb[:],
+            b"012ad5ebc9",
+        )
+        fb[-1] = 102
+        self.assertEqual(
+            fb[:],
+            b"012ad5ebcf",
+        )
+
+        # Verify that it gets serialized correctly to a new file.
+        new_file = io.BytesIO(b"")
+
+        fb.write_changes(new_file)
+        handle = fb.handle
+        if not isinstance(handle, io.BytesIO):
+            raise Exception("File handle changed type somehow!")
+
+        # Make sure original file didn't get modified.
+        self.assertEqual(
+            handle.getvalue(),
+            b"0123456789",
+        )
+
+        # Make sure new file did get modified.
+        self.assertEqual(
+            new_file.getvalue(),
+            b"012ad5ebcf",
+        )
