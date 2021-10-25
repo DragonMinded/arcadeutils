@@ -143,14 +143,17 @@ class FileBytes:
             raise Exception("Another FileBytes instance representing the same file was written back!")
 
         # Add data to the end of our representation.
-        for off, change in enumerate(data[:]):
-            loc = self.__patchlength + off
-            self.__patches[loc] = change
-            self.__lowest_patch = min(self.__lowest_patch, loc) if self.__lowest_patch is not None else loc
-            self.__highest_patch = max(self.__highest_patch, loc + 1) if self.__highest_patch is not None else (loc + 1)
-            self.__regions.clear()
+        data = data[:]
+        lowest_loc = self.__patchlength
+        highest_loc = self.__patchlength + len(data)
 
-        self.__patchlength += len(data)
+        for off, change in enumerate(data):
+            self.__patches[self.__patchlength + off] = change
+
+        self.__lowest_patch = min(self.__lowest_patch, lowest_loc) if self.__lowest_patch is not None else lowest_loc
+        self.__highest_patch = max(self.__highest_patch, highest_loc + 1) if self.__highest_patch is not None else (highest_loc + 1)
+        self.__regions.clear()
+        self.__patchlength = highest_loc
 
     def truncate(self, size: int) -> None:
         if self.__unsafe:
