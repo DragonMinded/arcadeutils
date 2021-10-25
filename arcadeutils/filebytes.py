@@ -286,7 +286,7 @@ class FileBytes:
 
         # Determine start of slice
         if key.start is None:
-            start = 0 if step > 0 else self.__patchlength
+            start = 0 if step > 0 else (self.__patchlength - 1)
         elif key.start < 0:
             start = self.__patchlength + key.start
         else:
@@ -407,7 +407,7 @@ class FileBytes:
 
                         # Append any amount of data we need to read past the end of the file.
                         if len(data) < stop - start:
-                            data.extend([0] * (stop - len(data)))
+                            data.extend([0] * ((stop - start) - len(data)))
                     else:
                         data = [0] * (stop - start)
 
@@ -418,23 +418,25 @@ class FileBytes:
 
                     return bytes(data)
             elif start > stop and step == -1:
+                start += 1
+                stop += 1
                 if not modifications:
                     # This is just a continguous read, reversed
-                    self.__handle.seek(stop + 1)
+                    self.__handle.seek(stop)
                     return self.__handle.read(start - stop)[::-1]
                 else:
-                    if (stop + 1) < self.__filelength:
-                        self.__handle.seek(stop + 1)
+                    if stop < self.__filelength:
+                        self.__handle.seek(stop)
                         data = [x for x in self.__handle.read(start - stop)]
 
                         # Append any amount of data we need to read past the end of the file.
                         if len(data) < start - stop:
-                            data.extend([0] * (start - len(data)))
+                            data.extend([0] * ((start - stop) - len(data)))
                     else:
                         data = [0] * (start - stop)
 
                     # Now we have to modify the data with our own overlay.
-                    for index, off in enumerate(range(stop + 1, start + 1)):
+                    for index, off in enumerate(range(stop, start)):
                         if off in self.__patches:
                             data[index] = self.__patches[off]
 

@@ -298,6 +298,18 @@ class TestFileBytes(unittest.TestCase):
             b,
         )
 
+    def test_read_after_append(self) -> None:
+        fb = FileBytes(io.BytesIO(b"0123456789"))
+
+        # Do some simple appending.
+        fb.append(b"abcdef")
+
+        # Now try to read over the boundary.
+        self.assertEqual(
+            fb[5:15],
+            b"56789abcde",
+        )
+
     def test_modify_variants(self) -> None:
         fb = FileBytes(io.BytesIO(b"0123456789"))
 
