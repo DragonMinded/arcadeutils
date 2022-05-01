@@ -66,13 +66,13 @@ for a specific command's help.
 The tools here are fully typed, and should be kept that way. To verify type hints, run the following:
 
 ```
-mypy --strict .
+mypy .
 ```
 
 The tools are also lint clean (save for line length lints which are useless drivel). To verify lint, run the following:
 
 ```
-flake8 --ignore E501 .
+flake8 .
 ```
 
 The tools also have their own unit tests. To verify tests, run the following:
