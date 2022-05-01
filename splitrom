@@ -93,6 +93,52 @@ def main() -> int:
         help="Combined output file.",
     )
 
+    split8 = subparsers.add_parser(
+        "split8",
+        help="Split one 16bit rom to two 8bit roms.",
+    )
+    split8.add_argument(
+        "combined",
+        metavar="COMBINED",
+        type=str,
+        help="Combined input file.",
+    )
+    split8.add_argument(
+        "upper",
+        metavar="UPPER",
+        type=str,
+        help="Upper half output rom file.",
+    )
+    split8.add_argument(
+        "lower",
+        metavar="LOWER",
+        type=str,
+        help="Lower half output rom file.",
+    )
+
+    split16 = subparsers.add_parser(
+        "split16",
+        help="Split one 32bit rom to two 16bit roms.",
+    )
+    split16.add_argument(
+        "combined",
+        metavar="COMBINED",
+        type=str,
+        help="Combined input file.",
+    )
+    split16.add_argument(
+        "upper",
+        metavar="UPPER",
+        type=str,
+        help="Upper half output rom file.",
+    )
+    split16.add_argument(
+        "lower",
+        metavar="LOWER",
+        type=str,
+        help="Lower half output rom file.",
+    )
+
     args = parser.parse_args()
     if args.action == "combine8":
         with open(args.upper, "rb") as fp:
@@ -108,6 +154,22 @@ def main() -> int:
             lower = fp.read()
         with open(args.combined, "wb") as fp:
             fp.write(ByteUtil.combine16bithalves(upper, lower))
+    elif args.action == "split8":
+        with open(args.combined, "rb") as fp:
+            combined = fp.read()
+        upper, lower = ByteUtil.split8bithalves(combined)
+        with open(args.lower, "wb") as fp:
+            fp.write(lower)
+        with open(args.upper, "wb") as fp:
+            fp.write(upper)
+    elif args.action == "split16":
+        with open(args.combined, "rb") as fp:
+            combined = fp.read()
+        upper, lower = ByteUtil.split16bithalves(combined)
+        with open(args.lower, "wb") as fp:
+            fp.write(lower)
+        with open(args.upper, "wb") as fp:
+            fp.write(upper)
     elif args.action == "byteswap":
         with open(args.old, "rb") as fp:
             old = fp.read()
