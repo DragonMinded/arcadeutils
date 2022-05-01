@@ -24,27 +24,27 @@ Takes a single byte argument "data", assumes that it is a 32-bit ROM where each 
 words is swapped. Returns a new bytes object of the same length where each 32-bit chunk
 of bytes is swapped.
 
-## ByteUtil.combine16bithalves
+### ByteUtil.combine16bithalves
 
 Takes two byte aruments "upper" and "lower" and assumes that these represent a ROM dump from
 two 16-bit chips that are memory-mapped to a 32-bit word on the hardware they were dumped
 from. Assembles them both into a single 32-bit ROM file where each 32-bit word is made
 up of the 16-bit upper value and 16-bit lower value of the two inputs.
 
-## ByteUtil.combine8bithalves
+### ByteUtil.combine8bithalves
 
 Takes two byte aruments "upper" and "lower" and assumes that these represent a ROM dump from
 two 8-bit chips that are memory-mapped to a 16-bit word on the hardware they were dumped
 from. Assembles them both into a single 16-bit ROM file where each half-word is made
 up of the 8-bit upper value and 8-bit lower value of the two inputs.
 
-# ByteUtil.split16bithalves
+### ByteUtil.split16bithalves
 
 Takes a single byte argument "data", assumes that it is a 32-bit ROM and splits it into
 two 16-bit ROMs of the upper and lower halves of each 32-bit value, returning a tuple of
 the upper and lower bytes. This is the exact reciprocal of `combine16bithalves`.
 
-# ByteUtil.split8bithalves
+### ByteUtil.split8bithalves
 
 Takes a single byte argument "data", assumes that it is a 16-bit ROM and splits it into
 two 8-bit ROMs of the upper and lower halves of each 16-bit value, returning a tuple of
